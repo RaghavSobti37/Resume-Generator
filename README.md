@@ -65,6 +65,3 @@ The AI Resume Generator is a web application built with React that helps users c
 
 ## Contributing
 Contributions welcome. Open issues or submit PRs.
-
-## License
-MIT
