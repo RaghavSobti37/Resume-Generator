@@ -48,6 +48,10 @@ const ResumePreview = ({ userData, setUserData, projects, setProjects, allTechSt
                         a[href]:after {
                             content: none !important;
                         }
+                        .resume-container {
+                            /* Force a standard, embeddable font to prevent character rendering issues in PDF */
+                            font-family: 'Times New Roman', Times, serif !important;
+                        }
                     }
                     @page {
                         size: auto;
