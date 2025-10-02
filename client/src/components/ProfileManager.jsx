@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { fetchGitHubData } from '../services/api';
 import { Loader2, Github, Briefcase } from 'lucide-react';
+import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input';
 
 export const defaultUserData = {
     name: 'Your Name',
     title: 'Professional Title',
     email: 'your.email@example.com',
-    phone: '555-123-4567',
+    phone: '', // Will store the full E.164 number, e.g., +15551234567
     linkedin: 'linkedin.com/in/your-profile',
     github: '',
-    summary: 'A brief professional summary about your skills, experience, and career goals.',
+    summary: 'Your AI-generated summary will appear here after matching with a job description.',
     experience: [],
     education: []
 };
@@ -95,7 +97,7 @@ const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, se
         setIsSaving(true);
         await handleSaveData({ userData: userData });
         setIsSaving(false);
-        setCurrentStep(2);
+        setCurrentStep(); // This will now call handleStepClick(2) in App.js
     };
 
     return (
@@ -107,7 +109,14 @@ const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, se
                     <Input label="Full Name" name="name" value={userData.name || ''} onChange={handleInputChange} placeholder="e.g., 'My SWE Profile'" />
                     <Input label="Professional Title" name="title" value={userData.title || ''} onChange={handleInputChange} placeholder="Senior Software Engineer" />
                     <Input label="Email" name="email" value={userData.email || ''} onChange={handleInputChange} placeholder="your@email.com" />
-                    <Input label="Phone" name="phone" value={userData.phone || ''} onChange={handleInputChange} placeholder="555-123-4567" />
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <PhoneInput
+                            placeholder="Enter phone number"
+                            value={userData.phone}
+                            onChange={(value) => setUserData(prev => ({ ...prev, phone: value }))}
+                            className="phone-input" />
+                    </div>
                     <Input label="LinkedIn Profile" name="linkedin" value={userData.linkedin || ''} onChange={handleInputChange} placeholder="linkedin.com/in/your-profile" />
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">GitHub Username</label>
@@ -119,7 +128,6 @@ const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, se
                         </div>
                     </div>
                 </div>
-                <TextArea label="Professional Summary" name="summary" value={userData.summary || ''} onChange={handleInputChange} />
                 <h3 className="text-xl font-semibold text-gray-700 mt-8 mb-4 flex items-center"><Briefcase className="w-5 h-5 mr-2" /> Professional Experience</h3>
                 {(userData.experience || []).map((data, index) => <JobItem key={index} index={index} type="experience" data={data} handleArrayChange={handleArrayChange} removeField={removeField} />)}
                 <button onClick={() => addField('experience')} className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-2 rounded-lg border border-indigo-200 transition">Add Experience</button>

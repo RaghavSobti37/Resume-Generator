@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
-import { getReadmeContent, generateProjectHighlights } from '../services/api';
+import { matchProjects } from '../services/api';
  
-const ProjectMatcher = ({ jobDescription, setJobDescription, matchedProjects, setMatchedProjects, projects, onNext, handleSaveData }) => {
+const ProjectMatcher = ({ jobDescription, setJobDescription, userData, setUserData, matchedProjects, setMatchedProjects, projects, onNext, handleSaveData }) => {
     const [isSaving, setIsSaving] = useState(false);
-    const [highlightStates, setHighlightStates] = useState({});
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const handleProjectToggle = (projectId) => {
         // This function now only adds/removes the project from the selection
@@ -19,30 +19,23 @@ const ProjectMatcher = ({ jobDescription, setJobDescription, matchedProjects, se
         });
     };
 
-    const handleGenerateHighlights = async (project) => {
+    const handleAutoMatch = async () => {
         if (!jobDescription) {
-            alert("Please paste a job description first to generate tailored highlights.");
+            alert("Please paste a job description first to match projects.");
             return;
         }
-
-        setHighlightStates(prev => ({ ...prev, [project.id]: { loading: true, error: null } }));
+        setIsGenerating(true);
 
         try {
-            const repoUrlParts = project.repo_url.split('/'); // e.g., ['github.com', 'username', 'repo-name']
-            const githubUsername = repoUrlParts[1];
-            const readmeContent = await getReadmeContent(githubUsername, project.name);
-            const highlights = await generateProjectHighlights(project, readmeContent, jobDescription);
-
-            // Update the specific project within the matchedProjects array
-            setMatchedProjects(prev => prev.map(p => 
-                p.id === project.id ? { ...p, highlights: highlights } : p
-            ));
-            setHighlightStates(prev => ({ ...prev, [project.id]: { loading: false, error: null } }));
-
+            const result = await matchProjects(projects, jobDescription);
+            const matchedIds = new Set(result.matchedProjectIds);
+            const newMatchedProjects = projects.filter(p => matchedIds.has(p.id));
+            setMatchedProjects(newMatchedProjects); // Set the matched projects as the selection
         } catch (error) {
-            console.error("Highlight generation failed:", error);
-            alert(`Failed to generate highlights: ${error.message}`);
-            setHighlightStates(prev => ({ ...prev, [project.id]: { loading: false, error: error.message } }));
+            console.error("AI project matching failed:", error);
+            alert(`Failed to match projects: ${error.message}`);
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -54,7 +47,7 @@ const ProjectMatcher = ({ jobDescription, setJobDescription, matchedProjects, se
             jobDescription 
         });
         setIsSaving(false);
-        onNext();
+        onNext(); // This will now call handleStepClick(3) in App.js
     };
 
     const isSelected = (projectId) => matchedProjects.some(p => p.id === projectId);
@@ -74,6 +67,17 @@ const ProjectMatcher = ({ jobDescription, setJobDescription, matchedProjects, se
                 />
             </div>
 
+            <button
+                onClick={handleAutoMatch}
+                disabled={isGenerating}
+                className="w-full mb-6 inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400"
+            >
+                {isGenerating
+                    ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Matching Projects...</>
+                    : <><Sparkles className="h-5 w-5 mr-2" /> Match Projects with AI</>
+                }
+            </button>
+
             <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 {projects.length > 0 ? projects.map(project => (
                     <div key={project.id} className={`p-4 rounded-lg border transition-all duration-200 ${isSelected(project.id) ? 'bg-indigo-50 border-indigo-300 shadow-sm' : 'bg-gray-50 border-gray-200'}`}>
@@ -90,21 +94,7 @@ const ProjectMatcher = ({ jobDescription, setJobDescription, matchedProjects, se
                                 <p className="text-xs text-gray-500 italic">
                                     {project.tech_stack.join(' · ')}
                                 </p>
-                                {isSelected(project.id) && (
-                                    <div className="mt-3">
-                                        <button 
-                                            onClick={(e) => { e.preventDefault(); handleGenerateHighlights(project); }}
-                                            disabled={highlightStates[project.id]?.loading}
-                                            className="text-xs inline-flex items-center px-2.5 py-1.5 border border-transparent font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400"
-                                        >
-                                            {highlightStates[project.id]?.loading 
-                                                ? <Loader2 className="h-4 w-4 animate-spin" /> 
-                                                : <><Sparkles className="h-4 w-4 mr-1" /> Generate Highlights</>
-                                            }
-                                        </button>
-                                        {project.highlights && <p className="text-xs text-green-600 mt-1">Highlights generated!</p>}
-                                    </div>
-                                )}
+                                {isSelected(project.id) && <p className="text-xs text-green-600 mt-2">✓ AI Recommended</p>}
                             </div>
                         </label>
                     </div>

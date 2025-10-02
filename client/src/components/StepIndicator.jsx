@@ -1,25 +1,28 @@
 import React from 'react';
-import { User, Zap, FileText, ChevronRight, Check } from 'lucide-react';
 
 export const steps = [
-    { id: 1, name: 'Manage Profile', icon: User },
-    { id: 2, name: 'Match to Job', icon: Zap },
-    { id: 3, name: 'Finalize & Export', icon: FileText },
+    { id: 1, name: 'Manage Profile' },
+    { id: 2, name: 'Match to Job' },
+    { id: 3, name: 'Finalize & Export' },
 ];
 
-const StepIndicator = ({ step, currentStep }) => {
-    const Icon = step.icon;
-    const isActive = step.id === currentStep;
-    const isComplete = step.id < currentStep;
+const StepIndicator = ({ step, currentStep, onStepClick }) => {
+    const isCompleted = currentStep > step.id;
+    const isActive = currentStep === step.id;
 
     return (
-        <div className={`flex items-center space-x-2 transition-all duration-300 ${isActive ? 'text-indigo-600 font-semibold' : isComplete ? 'text-green-600' : 'text-gray-400'}`}>
-            <div className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${isActive ? 'border-indigo-600 bg-indigo-50' : isComplete ? 'border-green-600 bg-green-100' : 'border-gray-300 bg-white'}`}>
-                {isComplete ? <Check size={18} /> : <Icon size={18} />}
+        <div
+            onClick={() => onStepClick(step.id)}
+            className="flex items-center cursor-pointer group"
+        >
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${isActive ? 'bg-indigo-600 text-white' : isCompleted ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500 group-hover:bg-gray-300'}`}>
+                {isCompleted ? '✓' : step.id}
             </div>
-            <span className="hidden sm:inline">{step.name}</span>
+            <div className={`ml-3 text-sm font-medium transition-all duration-300 ${isActive ? 'text-indigo-600' : 'text-gray-600'}`}>
+                {step.name}
+            </div>
             {step.id < steps.length && (
-                <ChevronRight className="w-5 h-5 text-gray-300 hidden sm:inline" />
+                <div className="w-16 h-0.5 bg-gray-200 mx-4"></div>
             )}
         </div>
     );

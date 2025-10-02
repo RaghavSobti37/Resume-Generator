@@ -16,7 +16,7 @@ function App() {
     const [projects, setProjects] = useState([]);
     const [matchedProjects, setMatchedProjects] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
-    
+
     const allTechStack = useMemo(() => {
         return Array.from(new Set(projects.flatMap(p => p.tech_stack))).sort();
     }, [projects]);
@@ -27,15 +27,21 @@ function App() {
         if (db && userId) {
             const docRef = doc(db, dataPath, 'resumeData', 'main');
             const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                // Also check for a step in localStorage for faster reloads
+                const savedStep = localStorage.getItem('currentStep');
+                if (savedStep) {
+                    setCurrentStep(JSON.parse(savedStep));
+                }
+
                 if (docSnap.exists()) {
                     const firestoreData = docSnap.data();
-                setUserData(firestoreData.userData || defaultUserData);
+                    setUserData(firestoreData.userData || defaultUserData);
                     setJobDescription(firestoreData.jobDescription || '');
                     setProjects(firestoreData.projects || []);
                     setMatchedProjects(firestoreData.matchedProjects || []);
-            } else {
-                // If no document exists, initialize with default data
-                setUserData(defaultUserData);
+                } else {
+                    // If no document exists, initialize with default data
+                    setUserData(defaultUserData);
                 }
             }, (error) => {
                 console.error("Error listening to document:", error);
@@ -43,6 +49,11 @@ function App() {
             return () => unsubscribe();
         }
     }, [db, dataPath, userId]);
+
+    // Save current step to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('currentStep', JSON.stringify(currentStep));
+    }, [currentStep]);
 
     const handleSaveData = useCallback(async (dataToSave, merge = true) => {
         if (!db || !userId) return;
@@ -54,6 +65,29 @@ function App() {
             console.error("Error saving document:", error);
         }
     }, [db, dataPath, userId]);
+
+    const handleStepClick = (stepId) => {
+        // Allow navigating backwards freely
+        if (stepId < currentStep) {
+            setCurrentStep(stepId);
+            return;
+        }
+
+        // Validate before moving forwards
+        if (currentStep === 1 && stepId > 1) {
+            if (!userData.github || projects.length === 0) {
+                alert("Please enter your GitHub username and fetch your projects before continuing.");
+                return;
+            }
+        }
+        if (currentStep === 2 && stepId > 2) {
+            if (matchedProjects.length === 0) {
+                alert("Please select at least one project to include in your resume.");
+                return;
+            }
+        }
+        setCurrentStep(stepId);
+    };
 
     if (isLoading || !userId) {
         return (
@@ -72,25 +106,30 @@ function App() {
                     userData={userData}
                     setUserData={setUserData}
                     handleSaveData={handleSaveData}
-                    setCurrentStep={setCurrentStep}
+                    setCurrentStep={() => handleStepClick(2)}
                 />;
             case 2:
                 return <ProjectMatcher
                     jobDescription={jobDescription}
                     setJobDescription={setJobDescription}
+                    userData={userData}
+                    setUserData={setUserData}
                     matchedProjects={matchedProjects}
                     setMatchedProjects={setMatchedProjects}
                     projects={projects}
-                    onNext={() => setCurrentStep(3)}
+                    onNext={() => handleStepClick(3)}
                     handleSaveData={handleSaveData}
                 />;
             case 3:
                 return (
                     userData && <ResumePreview 
-                        userData={userData} 
-                        projects={matchedProjects} 
+                        userData={userData}
+                        setUserData={setUserData}
+                        projects={matchedProjects}
+                        setProjects={setMatchedProjects}
                         allTechStack={allTechStack}
                         jobDescription={jobDescription}
+                        handleSaveData={handleSaveData}
                     />
                 );
             default:
@@ -119,10 +158,9 @@ function App() {
                 
                 <div className="flex justify-between sm:justify-center mt-6 space-x-2 sm:space-x-8">
                     {steps.map((step) => (
-                        <StepIndicator key={step.id} step={step} currentStep={currentStep} />
+                        <StepIndicator key={step.id} step={step} currentStep={currentStep} onStepClick={handleStepClick} />
                     ))}
                 </div>
-                <p className="text-xs text-center mt-4 text-gray-400">Your User ID: {userId}</p>
             </header>
 
             <main className="max-w-7xl mx-auto pb-10">

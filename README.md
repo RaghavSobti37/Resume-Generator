@@ -12,6 +12,32 @@ The AI Resume Generator is a web application built with React that helps users c
 - Data persistence using browser's Local Storage.
 - Responsive design for mobile and desktop.
 
+## Version History
+
+### Version 1.1 - Enhanced AI Editing & UI Polish
+
+This update focuses on making the AI-powered editing features more robust, intuitive, and user-friendly.
+
+**Key Changes:**
+
+*   **Advanced AI Refinement Options**: The "Refine with AI" feature has been upgraded with five powerful new styles:
+    *   **Impact**: Rewrites text to be more results-oriented and achievement-focused.
+    *   **Target**: Strategically incorporates keywords from a job description.
+    *   **Brevity**: Makes text more concise and impactful.
+    *   **Clarity**: Improves readability and fixes grammatical issues.
+    *   **Assurance**: Refines the tone to convey more confidence.
+
+*   **Interactive Help Modal**: A new help modal explains each AI refinement style with descriptions and before/after examples. This helps users choose the best option for their needs.
+
+*   **Undo Functionality**: After applying an AI refinement, an "Undo" button now appears for a few seconds, allowing users to instantly revert the change if they are not satisfied.
+
+*   **UI/UX Improvements**:
+    *   The "Refine with AI" dropdown now opens directly on click, removing an extra step.
+    *   The internal User ID has been removed from the main header for a cleaner look.
+    *   Resolved initial CSS linting errors for a smoother development experience.
+
+### Version 1.0 - Initial Release
+
 ## Prerequisites
 - Node.js (14+ recommended)
 - npm

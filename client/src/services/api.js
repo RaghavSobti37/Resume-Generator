@@ -13,7 +13,8 @@ async function callGeminiAPI(prompt, systemPrompt, responseSchema) {
         systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {
             responseMimeType: "application/json",
-            responseSchema: responseSchema
+            responseSchema: responseSchema,
+            maxOutputTokens: 8192, // Increase token limit to prevent truncated JSON
         }
     };
 
@@ -145,4 +146,162 @@ Based on all the provided information, generate 2-3 resume bullet points that ma
 
     const responseSchema = { type: "ARRAY", items: { type: "STRING" } };
     return await callGeminiAPI(userPrompt, systemPrompt, responseSchema);
+};
+
+export const generateSummary = async (userData, projects, jobDescription) => {
+    if (!jobDescription) throw new Error("Job Description is required.");
+
+    const systemPrompt = `You are an expert resume writer. Based on the user's profile, their projects, and the job description, write a compelling 2-3 sentence professional summary. The summary should be tailored to the job description.`;
+
+    const userPrompt = `
+**JOB DESCRIPTION:**
+---
+${jobDescription}
+---
+
+**USER PROFILE & PROJECTS:**
+---
+Full Skill List: ${(userData.allTechStack || []).join(', ')}
+Experience: ${(userData.experience || []).map(e => `${e.title} at ${e.organization}`).join(', ')}
+Projects: ${projects.map(p => `${p.name}: ${p.description}`).join('\n')}
+---
+
+Generate the professional summary as a single string.`;
+
+    const responseSchema = { type: "OBJECT", properties: { "summary": { "type": "STRING" } } };
+    return await callGeminiAPI(userPrompt, systemPrompt, responseSchema);
+};
+
+export const generateTailoredContent = async (userData, projects, jobDescription) => {
+    if (!jobDescription) throw new Error("Job Description is required.");
+
+    const systemPrompt = `You are an expert resume writer and career coach. Your task is to analyze the user's profile, their list of projects, and a target job description to generate a perfectly tailored resume content package.
+
+You must perform the following actions and return them in a single, structured JSON object:
+1.  **Professional Summary**: Write a 2-3 sentence professional summary that highlights the user's most relevant skills and experience for this specific job.
+2.  **Relevant Skills**: From the user's full list of skills, select the top 10-15 most relevant ones for the job description.
+3.  **Matched Projects**: Select the top 3 most relevant projects. For each of these projects, you MUST generate 2-3 crisp, concise, and impactful bullet-point highlights that align the project's achievements with the job requirements. Start each highlight with a strong action verb.
+
+Return a single JSON object adhering to the provided schema.`;
+
+    const userPrompt = `
+**JOB DESCRIPTION:**
+---
+${jobDescription}
+---
+
+**USER PROFILE:**
+---
+Name: ${userData.name}
+Title: ${userData.title}
+Existing Summary: ${userData.summary}
+Full Skill List: ${(userData.allTechStack || []).join(', ')}
+Experience: ${(userData.experience || []).map(e => `${e.title} at ${e.organization}`).join(', ')}
+---
+
+**AVAILABLE PROJECTS:**
+---
+${projects.map(p => `[${p.id}] ${p.name}: ${p.description} (Tech: ${p.tech_stack.join(', ')})`).join('\n')}
+---
+
+Generate the tailored resume content package.`;
+
+    const responseSchema = {
+        type: "OBJECT",
+        properties: {
+            "summary": { "type": "STRING" },
+            "relevantSkills": { "type": "ARRAY", "items": { "type": "STRING" } },
+            "matchedProjects": {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        "id": { "type": "STRING" },
+                        "highlights": { "type": "ARRAY", "items": { "type": "STRING" } }
+                    },
+                    required: ["id", "highlights"]
+                }
+            }
+        }
+    };
+
+    return await callGeminiAPI(userPrompt, systemPrompt, responseSchema);
+};
+
+export const matchProjects = async (projects, jobDescription) => {
+    if (!jobDescription) throw new Error("Job Description is required.");
+
+    const systemPrompt = `You are a technical recruiter AI. Your task is to analyze a job description and a list of projects.
+
+You must perform the following actions:
+1.  Identify the key technologies and programming languages required by the job description.
+2.  Compare these requirements against the tech stack of each project.
+3.  Select the top 3 most relevant projects that best match the job's technical requirements.
+
+Return a single JSON object containing a list of the IDs of the matched projects.`;
+
+    const userPrompt = `
+**JOB DESCRIPTION:**
+---
+${jobDescription}
+---
+
+**AVAILABLE PROJECTS:**
+---
+${projects.map(p => `[${p.id}] ${p.name} (Tech: ${p.tech_stack.join(', ')})`).join('\n')}
+---
+
+Return a JSON object with a single key "matchedProjectIds" which is an array of the top 3 project IDs.`;
+
+    const responseSchema = { type: "OBJECT", properties: { "matchedProjectIds": { type: "ARRAY", "items": { "type": "STRING" } } } };
+    return await callGeminiAPI(userPrompt, systemPrompt, responseSchema);
+};
+
+export const generateProjectDescription = async (project, jobDescription) => {
+    const systemPrompt = `You are an expert technical writer. Your task is to write a concise and professional one-sentence description for a software project. The description should summarize the project's purpose and key technology. If a job description is provided, tailor the project description to sound more relevant to the job.`;
+
+    const userPrompt = `
+Project Name: ${project.name}
+Existing Description: ${project.description}
+Tech Stack: ${project.tech_stack.join(', ')}
+Job Description (for context, optional):
+---
+${jobDescription || 'N/A'}
+---
+
+Generate a new, improved one-sentence description for this project. Return a JSON object with a single key "description".`;
+
+    const responseSchema = { type: "OBJECT", properties: { "description": { "type": "STRING" } } };
+    const result = await callGeminiAPI(userPrompt, systemPrompt, responseSchema);
+    return result.description;
+};
+
+export const refineText = async (text, style, context) => {
+    const systemPrompt = `You are an expert editor and technical writer. Your task is to refine the given text based on a specific style. The available styles are:
+- 'impact': Enhances weak statements by incorporating strong action verbs and focusing the narrative on measurable results and project influence.
+- 'target': Rephrases the selected text to strategically incorporate keywords from the provided job description context.
+- 'brevity': Executes a conciseness pass, eliminating filler words and condensing phrases to maximize information density without losing technical detail.
+- 'clarity': Standardizes complex or fragmented sentences, converts passive voice to active voice, and ensures smooth, logical flow between ideas.
+- 'assurance': Refines the tone by removing any hesitant language and replacing it with terminology that conveys unwavering confidence and expertise.
+
+You must only return the refined text. If the original text is a list of bullet points (separated by newlines), you MUST return a list of bullet points in the same format.`;
+
+    const userPrompt = `
+Original Text:
+---
+${text}
+---
+
+Refinement Style: ${style}
+
+Additional Context (like a job description, for tailoring):
+---
+${context || 'N/A'}
+---
+
+Please refine the text according to the style. Return a JSON object with a single key "refinedText".`;
+
+    const responseSchema = { type: "OBJECT", properties: { "refinedText": { "type": "STRING" } } };
+    const result = await callGeminiAPI(userPrompt, systemPrompt, responseSchema);
+    return result.refinedText;
 };
