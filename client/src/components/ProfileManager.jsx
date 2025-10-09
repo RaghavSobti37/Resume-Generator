@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { fetchGitHubData } from '../services/api';
-import { Loader2, Github, Briefcase } from 'lucide-react';
+import React, { useState } from 'react';
+import { parseResume, fetchGitHubData } from '../services/api';
+import { Loader2, Github, Briefcase, UploadCloud, Trash2 } from 'lucide-react';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
 
 export const defaultUserData = {
-    name: 'Your Name',
-    title: 'Professional Title',
-    email: 'your.email@example.com',
-    phone: '', // Will store the full E.164 number, e.g., +15551234567
-    linkedin: 'linkedin.com/in/your-profile',
+    name: '',
+    title: '',
+    email: '',
+    phone: '',
+    linkedin: '',
     github: '',
-    summary: 'Your AI-generated summary will appear here after matching with a job description.',
+    summary: '',
     experience: [],
     education: []
 };
@@ -41,14 +41,10 @@ const JobItem = ({ index, type, data, handleArrayChange, removeField }) => (
     </div>
 );
 
-
-const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, setCurrentStep }) => {
+const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, handleClearData, setCurrentStep }) => {
     const [isSaving, setIsSaving] = useState(false);
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setUserData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
+    const [isParsing, setIsParsing] = useState(false);
+    const [debugText, setDebugText] = useState('');
 
     const handleArrayChange = (e, index, type, field) => {
         const { value } = e.target;
@@ -93,22 +89,75 @@ const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, se
         }
     };
 
+    const handleResumeUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setIsParsing(true);
+        try {
+            const parsedData = await parseResume(file);
+            setDebugText(parsedData);
+            // const newData = { ...defaultUserData, ...parsedData };
+            // setUserData(newData);
+            // await handleSaveData({ userData: newData });
+            // alert("Resume parsed successfully! Please review the information below.");
+        } catch (error) {
+            alert(`Error parsing resume: ${error.message}`);
+        } finally {
+            setIsParsing(false);
+        }
+    };
+
     const handleSaveAndContinue = async () => {
         setIsSaving(true);
         await handleSaveData({ userData: userData });
         setIsSaving(false);
-        setCurrentStep(); // This will now call handleStepClick(2) in App.js
+        setCurrentStep();
     };
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">1. Your Personal Profile</h2>
+            {debugText && (
+                <div className="mb-4 p-4 bg-gray-100 rounded-lg">
+                    <h3 className="font-bold text-lg mb-2">Extracted Text (for debugging):</h3>
+                    <pre className="whitespace-pre-wrap text-sm">{debugText}</pre>
+                </div>
+            )}
+            <div className="flex justify-between items-center mb-6 border-b pb-2">
+                <h2 className="text-2xl font-bold text-gray-800">1. Your Personal Profile</h2>
+                <button
+                    onClick={handleClearData}
+                    className="flex items-center text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
+                    title="Clear all data and start over"
+                ><Trash2 className="w-4 h-4 mr-1" /> Clear All Data</button>
+            </div>
+            <div className="mb-6 p-4 border-l-4 border-indigo-500 bg-indigo-50">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                    <UploadCloud className="w-6 h-6 mr-2 text-indigo-600" />
+                    Have a resume? Upload it to get started.
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">Upload your resume (PDF or DOCX) and let AI fill out the form for you.</p>
+                <input
+                    type="file"
+                    id="resume-upload"
+                    className="hidden"
+                    accept=".pdf,.docx"
+                    onChange={handleResumeUpload}
+                />
+                <label
+                    htmlFor="resume-upload"
+                    className="cursor-pointer inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 disabled:bg-indigo-300"
+                >
+                    {isParsing ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <UploadCloud className="w-5 h-5 mr-2" />}
+                    {isParsing ? 'Parsing Resume...' : 'Upload Resume'}
+                </label>
+            </div>
             
             <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input label="Full Name" name="name" value={userData.name || ''} onChange={handleInputChange} placeholder="e.g., 'My SWE Profile'" />
-                    <Input label="Professional Title" name="title" value={userData.title || ''} onChange={handleInputChange} placeholder="Senior Software Engineer" />
-                    <Input label="Email" name="email" value={userData.email || ''} onChange={handleInputChange} placeholder="your@email.com" />
+                    <Input label="Full Name" name="name" value={userData.name || ''} onChange={(e) => setUserData(prev => ({...prev, name: e.target.value}))} placeholder="John Doe" />
+                    <Input label="Professional Title" name="title" value={userData.title || ''} onChange={(e) => setUserData(prev => ({...prev, title: e.target.value}))} placeholder="Senior Software Engineer" />
+                    <Input label="Email" name="email" value={userData.email || ''} onChange={(e) => setUserData(prev => ({...prev, email: e.target.value}))} placeholder="your@email.com" />
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                         <PhoneInput
@@ -117,11 +166,11 @@ const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, se
                             onChange={(value) => setUserData(prev => ({ ...prev, phone: value }))}
                             className="phone-input" />
                     </div>
-                    <Input label="LinkedIn Profile" name="linkedin" value={userData.linkedin || ''} onChange={handleInputChange} placeholder="linkedin.com/in/your-profile" />
+                    <Input label="LinkedIn Profile" name="linkedin" value={userData.linkedin || ''} onChange={(e) => setUserData(prev => ({...prev, linkedin: e.target.value}))} placeholder="linkedin.com/in/your-profile" />
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">GitHub Username</label>
                         <div className="mt-1 flex rounded-md shadow-sm">
-                            <input type="text" name="github" value={userData.github || ''} onChange={handleInputChange} placeholder="your-username" className="flex-1 block w-full rounded-none rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 p-2 border" />
+                            <input type="text" name="github" value={userData.github || ''} onChange={(e) => setUserData(prev => ({...prev, github: e.target.value}))} placeholder="your-username" className="flex-1 block w-full rounded-none rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 p-2 border" />
                             <button onClick={handleFetchGitHub} disabled={isSaving} className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-4 text-sm text-gray-700 hover:bg-gray-100 disabled:bg-gray-200">
                                 {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Github className="w-5 h-5 mr-2" /> Fetch</>}
                             </button>

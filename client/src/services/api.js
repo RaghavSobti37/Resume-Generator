@@ -305,3 +305,20 @@ Please refine the text according to the style. Return a JSON object with a singl
     const result = await callGeminiAPI(userPrompt, systemPrompt, responseSchema);
     return result.refinedText;
 };
+
+export const parseResume = async (file) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    const response = await fetch('http://localhost:3001/api/parse', {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to parse resume');
+    }
+
+    return await response.json();
+};

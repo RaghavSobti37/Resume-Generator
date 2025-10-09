@@ -6,6 +6,9 @@ import ProjectMatcher from './components/ProjectMatcher';
 import ResumePreview from './components/ResumePreview';
 import StepIndicator, { steps } from './components/StepIndicator';
 import { Loader2 } from 'lucide-react';
+import { Analytics } from "@vercel/analytics/react"
+
+<Analytics />
 
 const APP_ID = process.env.REACT_APP_ID || 'default-app-id';
 
@@ -66,6 +69,32 @@ function App() {
         }
     }, [db, dataPath, userId]);
 
+    const handleClearData = useCallback(async () => {
+        if (!window.confirm("Are you sure you want to clear all data? This action cannot be undone.")) return;
+
+        setUserData(defaultUserData);
+        setJobDescription('');
+        setProjects([]);
+        setMatchedProjects([]);
+        setCurrentStep(1);
+        
+        // Clear data in Firestore as well
+        if (db && userId) {
+            const docRef = doc(db, dataPath, 'resumeData', 'main');
+            try {
+                await setDoc(docRef, { 
+                    userData: defaultUserData,
+                    jobDescription: '',
+                    projects: [],
+                    matchedProjects: []
+                }, { merge: false }); // Overwrite the document
+                console.log("All data cleared successfully.");
+            } catch (error) {
+                console.error("Error clearing document:", error);
+            }
+        }
+    }, [db, dataPath, userId]);
+
     const handleStepClick = (stepId) => {
         // Allow navigating backwards freely
         if (stepId < currentStep) {
@@ -106,6 +135,7 @@ function App() {
                     userData={userData}
                     setUserData={setUserData}
                     handleSaveData={handleSaveData}
+                    handleClearData={handleClearData}
                     setCurrentStep={() => handleStepClick(2)}
                 />;
             case 2:
