@@ -1,93 +1,91 @@
-# AI Resume Generator
+<h1 align="center">Resume Generator</h1>
+
+<p align="center">
+  Resume builder that connects GitHub projects with AI-assisted project descriptions and clean developer-ready output.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/visibility-public-brightgreen" alt="Public repository" />
+  <img src="https://img.shields.io/badge/maintained-yes-blue" alt="Maintained" />
+  <img src="https://img.shields.io/badge/owner-RaghavSobti37-111827" alt="Owner" />
+</p>
+<p align="center">
+  <a href="https://resume-generator-sandy.vercel.app"><strong>Live Project</strong></a>
+</p>
+
 
 ## Overview
-The AI Resume Generator is a web application built with React that helps users create professional resumes. It uses the Gemini API to analyze a user's GitHub projects and a job description to generate tailored, impactful bullet points for their resume.
 
-## Features
-- Multi-step resume builder interface
-- Fetches public repositories from a user's GitHub profile.
-- AI-powered project highlight generation based on a job description.
-- Live, in-browser editing of the final resume preview.
-- PDF export functionality for resumes
-- Data persistence using browser's Local Storage.
-- Responsive design for mobile and desktop.
+Resume builder that connects GitHub projects with AI-assisted project descriptions and clean developer-ready output.
 
-## Version History
+This README is structured as a professional project handoff: it explains the purpose, stack, setup flow, and maintenance expectations so the repository is easier to evaluate, run, and extend.
 
-### Version 1.1 - Enhanced AI Editing & UI Polish
+## Highlights
 
-This update focuses on making the AI-powered editing features more robust, intuitive, and user-friendly.
+- Clear implementation of the project goal: Resume builder that connects GitHub projects with AI-assisted project descriptions and clean developer-ready output.
+- Organized repository structure for maintainable iteration and future extension.
+- Built around JavaScript, Node.js with pragmatic tooling choices.
+- Tagged for discoverability around ai-writing, github-api, javascript, react, resume-builder.
 
-**Key Changes:**
+## Tech Stack
 
-*   **Advanced AI Refinement Options**: The "Refine with AI" feature has been upgraded with five powerful new styles:
-    *   **Impact**: Rewrites text to be more results-oriented and achievement-focused.
-    *   **Target**: Strategically incorporates keywords from a job description.
-    *   **Brevity**: Makes text more concise and impactful.
-    *   **Clarity**: Improves readability and fixes grammatical issues.
-    *   **Assurance**: Refines the tone to convey more confidence.
+- JavaScript
+- Node.js
 
-*   **Interactive Help Modal**: A new help modal explains each AI refinement style with descriptions and before/after examples. This helps users choose the best option for their needs.
+<p>
+  <img src="https://img.shields.io/badge/JavaScript-111827?style=flat" alt="JavaScript" />
+  <img src="https://img.shields.io/badge/Node.js-111827?style=flat" alt="Node.js" />
+</p>
 
-*   **Undo Functionality**: After applying an AI refinement, an "Undo" button now appears for a few seconds, allowing users to instantly revert the change if they are not satisfied.
+## Getting Started
 
-*   **UI/UX Improvements**:
-    *   The "Refine with AI" dropdown now opens directly on click, removing an extra step.
-    *   The internal User ID has been removed from the main header for a cleaner look.
-    *   Resolved initial CSS linting errors for a smoother development experience.
+### Prerequisites
 
-### Version 1.0 - Initial Release
+- Git
+- A runtime appropriate for the stack listed above
 
-## Prerequisites
-- Node.js (14+ recommended)
-- npm
+### Installation
 
-## Local Development Setup
+```bash
+git clone https://github.com/RaghavSobti37/Resume-Generator.git
+cd Resume-Generator
+npm install
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/RaghavSobti37/Resume-Generator.git
-   cd Resume-Generator/client
-   ```
+### Development
 
-2. **Install dependencies**
+```bash
+npm run dev
+```
 
-   This will install all the necessary packages for the React application.
-   ```bash
-   npm install
-   ```
+### Production Build
 
-3. **Set up Environment Variables**
+```bash
+npm run build
+```
 
-   The application requires an API key from Google to power its AI features.
-   
-   - In the `client` directory, create a new file named `.env`.
-   - Open the `.env` file and add the following line, replacing `YOUR_GEMINI_API_KEY` with your actual key.
+## Project Structure
 
-   ```env
-   # client/.env
-   REACT_APP_GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-   ```
-   > You can get a free API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+The repository is organized around the source code, configuration, and project assets needed to run or extend the application. Start with the main entry point and configuration files, then follow the feature or module directories from there.
 
-4. **Start the development server**
-   ```bash
-   npm start
-   ```
+## Quality Notes
 
-5. **Open the app in your browser** at http://localhost:3000.
+- Keep implementation changes small, reviewed, and easy to reason about.
+- Document new environment variables, scripts, and external services as they are added.
+- Prefer clear naming and predictable structure over clever abstractions.
+- Validate user-facing flows after any dependency, routing, or deployment change.
 
-## Build & Serve (Production)
-- Create production build:
-  npm run build
-- Serve locally (optional):
-  npm install -g serve
-  serve -s build
-- App will be available at the URL shown by serve (usually http://localhost:3000)
+## Topics
 
-## Environment / Security Notes
-- Do not commit real secrets to source control. Use environment management for production deployments.
-- The Gemini API is called directly from the client in this project. For a production application, it is strongly recommended to route these calls through a secure backend proxy to protect your API key.
+- ai-writing
+- github-api
+- javascript
+- react
+- resume-builder
 
-## Contributing
-Contributions welcome. Open issues or submit PRs.
+## Author
+
+Built and maintained by [Raghav Raj Sobti](https://github.com/RaghavSobti37).
+
+Project link: [https://resume-generator-sandy.vercel.app](https://resume-generator-sandy.vercel.app)
+
