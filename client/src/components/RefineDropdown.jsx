@@ -38,7 +38,7 @@ const RefineDropdown = ({ onRefine, isLoading, isDisabled, onHelpClick }) => {
                     </div>
                     <div className="py-1" role="menu" aria-orientation="vertical">
                         {styles.map(style => (
-                            <a key={style} href="#" onClick={(e) => { e.preventDefault(); handleSelect(style); }} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">{style}</a>
+                            <button key={style} type="button" onClick={() => handleSelect(style)} className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100" role="menuitem">{style}</button>
                         ))}
                     </div>
                 </div>

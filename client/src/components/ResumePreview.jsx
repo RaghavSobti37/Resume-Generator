@@ -126,8 +126,7 @@ const ResumePreview = ({ userData, setUserData, projects, setProjects, allTechSt
         if (!lastRefined) return;
 
         const { fieldId, originalText } = lastRefined;
-        const [field, indexStr] = fieldId.split('-');
-        const index = indexStr ? parseInt(indexStr, 10) : null;
+        const [field] = fieldId.split('-');
 
         if (field === 'summary') {
             setUserData(prev => ({ ...prev, summary: originalText }));

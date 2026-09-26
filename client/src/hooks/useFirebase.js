@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -19,7 +19,7 @@ export const useFirebase = () => {
 
     useEffect(() => {
         if (!firebaseConfig.apiKey) {
-            console.error('Firebase configuration is missing.');
+            setUserId('local-resume-user');
             setIsLoading(false);
             return;
         }
@@ -40,6 +40,7 @@ export const useFirebase = () => {
             });
         } catch (error) {
             console.error("Firebase initialization failed:", error);
+            setUserId('local-resume-user');
             setIsLoading(false);
         }
     }, []);

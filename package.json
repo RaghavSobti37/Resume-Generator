@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "build": "npm run build --prefix client",
+    "test": "npm test --prefix client -- --watchAll=false"
+  },
   "dependencies": {
     "@vercel/analytics": "^1.5.0"
   }

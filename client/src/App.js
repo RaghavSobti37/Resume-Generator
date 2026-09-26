@@ -6,11 +6,8 @@ import ProjectMatcher from './components/ProjectMatcher';
 import ResumePreview from './components/ResumePreview';
 import StepIndicator, { steps } from './components/StepIndicator';
 import { Loader2 } from 'lucide-react';
-import { Analytics } from "@vercel/analytics/react"
-
-<Analytics />
-
 const APP_ID = process.env.REACT_APP_ID || 'default-app-id';
+const LOCAL_DRAFT_KEY = 'resume-generator-draft';
 
 function App() {
     const { db, userId, isLoading } = useFirebase();
@@ -50,6 +47,21 @@ function App() {
                 console.error("Error listening to document:", error);
             });
             return () => unsubscribe();
+        } else if (userId) {
+            const savedDraft = localStorage.getItem(LOCAL_DRAFT_KEY);
+            if (savedDraft) {
+                try {
+                    const draft = JSON.parse(savedDraft);
+                    setUserData(draft.userData || defaultUserData);
+                    setJobDescription(draft.jobDescription || '');
+                    setProjects(draft.projects || []);
+                    setMatchedProjects(draft.matchedProjects || []);
+                } catch {
+                    setUserData(defaultUserData);
+                }
+            } else {
+                setUserData(defaultUserData);
+            }
         }
     }, [db, dataPath, userId]);
 
@@ -59,7 +71,11 @@ function App() {
     }, [currentStep]);
 
     const handleSaveData = useCallback(async (dataToSave, merge = true) => {
-        if (!db || !userId) return;
+        if (!db || !userId) {
+            const existingDraft = JSON.parse(localStorage.getItem(LOCAL_DRAFT_KEY) || '{}');
+            localStorage.setItem(LOCAL_DRAFT_KEY, JSON.stringify(merge ? { ...existingDraft, ...dataToSave } : dataToSave));
+            return;
+        }
         try {
             const docRef = doc(db, dataPath, 'resumeData', 'main');
             await setDoc(docRef, dataToSave, { merge });
@@ -77,6 +93,7 @@ function App() {
         setProjects([]);
         setMatchedProjects([]);
         setCurrentStep(1);
+        localStorage.removeItem(LOCAL_DRAFT_KEY);
         
         // Clear data in Firestore as well
         if (db && userId) {
