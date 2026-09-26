@@ -1,4 +1,5 @@
 import { profileSummary, projectDescription, projectHighlights, rankProjects } from './localResume';
+import { profileFromResumeText } from './resumeParser';
 
 export const fetchGitHubData = async (username) => {
   if (!username?.trim()) throw new Error('GitHub username is required.');
@@ -63,6 +64,28 @@ export const refineText = async (text, style) => {
   return normalized;
 };
 
-export const parseResume = async () => {
-  throw new Error('Resume import is not available in this browser-only version. Enter your details directly, then import projects from GitHub.');
+export const parseResume = async (file) => {
+  if (!file) throw new Error('Choose a PDF or DOCX resume first.');
+  const fileName = String(file.name || '').toLowerCase();
+  let text = '';
+
+  if (fileName.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    const mammoth = await import('mammoth');
+    const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    text = result.value;
+  } else if (fileName.endsWith('.pdf') || file.type === 'application/pdf') {
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf');
+    const document = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    const pages = await Promise.all(Array.from({ length: document.numPages }, async (_, index) => {
+      const page = await document.getPage(index + 1);
+      const content = await page.getTextContent();
+      return content.items.map((item) => item.str || '').join(' ');
+    }));
+    text = pages.join('\n');
+  } else {
+    throw new Error('Only PDF and DOCX resumes are supported.');
+  }
+
+  if (!text.trim()) throw new Error('No selectable text was found in this resume. Use a text-based PDF or DOCX file.');
+  return { ...profileFromResumeText(text), rawText: text };
 };

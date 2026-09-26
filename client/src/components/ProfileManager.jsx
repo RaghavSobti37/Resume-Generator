@@ -93,15 +93,15 @@ const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, ha
         const file = event.target.files[0];
         if (!file) return;
 
-        setIsParsing(true);
-        try {
-            const parsedData = await parseResume(file);
-            setDebugText(parsedData);
-            // const newData = { ...defaultUserData, ...parsedData };
-            // setUserData(newData);
-            // await handleSaveData({ userData: newData });
-            // alert("Resume parsed successfully! Please review the information below.");
-        } catch (error) {
+            setIsParsing(true);
+            try {
+                const parsedData = await parseResume(file);
+            const { rawText, ...profileDraft } = parsedData;
+            const newData = { ...userData, ...Object.fromEntries(Object.entries(profileDraft).filter(([, value]) => value)) };
+            setUserData(newData);
+            setDebugText(`Imported ${file.name}. Review the fields below before continuing.`);
+            await handleSaveData({ userData: newData });
+            } catch (error) {
             alert(`Error parsing resume: ${error.message}`);
         } finally {
             setIsParsing(false);
@@ -119,8 +119,8 @@ const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, ha
         <div className="bg-white p-6 rounded-xl shadow-lg">
             {debugText && (
                 <div className="mb-4 p-4 bg-gray-100 rounded-lg">
-                    <h3 className="font-bold text-lg mb-2">Extracted Text (for debugging):</h3>
-                    <pre className="whitespace-pre-wrap text-sm">{debugText}</pre>
+                    <h3 className="font-bold text-lg mb-2">Resume imported</h3>
+                    <p className="text-sm">{debugText}</p>
                 </div>
             )}
             <div className="flex justify-between items-center mb-6 border-b pb-2">
@@ -136,7 +136,7 @@ const ProfileManager = ({ setProjects, userData, setUserData, handleSaveData, ha
                     <UploadCloud className="w-6 h-6 mr-2 text-indigo-600" />
                     Have a resume? Upload it to get started.
                 </h3>
-                <p className="text-sm text-gray-600 mb-3">Upload your resume (PDF or DOCX) and let AI fill out the form for you.</p>
+                <p className="text-sm text-gray-600 mb-3">Upload a PDF or DOCX to extract details locally in your browser, then review the form before continuing.</p>
                 <input
                     type="file"
                     id="resume-upload"
